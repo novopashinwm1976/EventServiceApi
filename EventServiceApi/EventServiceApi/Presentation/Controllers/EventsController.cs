@@ -1,174 +1,109 @@
 ﻿using EventServiceApi.Application.Interfaces;
 using EventServiceApi.Data.DTO;
-using EventServiceApi.Data.Models;
 
 using Microsoft.AspNetCore.Mvc;
-
-using System.Net;
 
 namespace EventServiceApi.Presentation.Controllers;
 
 /// <summary>
-/// Контроллер для работы  событиями
+/// Контроллер для работы с событиями
 /// </summary>
-/// <param name="_eventService"></param>
-/// <param name="_logger"></param>
 [ApiController]
-[Route("api/[controller]")]
-public class EventsController(IEventService _eventService, ILogger<EventsController> _logger) : ControllerBase
+[Route("events")]
+public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
 {
     /// <summary>
     /// Получаем все события
     /// </summary>
-    /// <returns></returns>
     [HttpGet]
-    public async Task< ApiResult<List<Event>>> GetEvents() 
+    [ProducesResponseType(typeof(IEnumerable<EventResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<EventResponse>>> GetEvents()
     {
-        _logger.Log(LogLevel.Information, "Получаем информацию о всех событиях");
-        return new ApiResult<List<Event>>
-        {
-            Data = await _eventService.GetAllAsync(),
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = "Получаем информацию о всех событиях"
-        };
+        logger.LogInformation("Получаем информацию о всех событиях");
+        var events = await eventService.GetAllAsync();
+        return Ok(events.Select(ToResponse));
     }
 
     /// <summary>
     /// Получить информацию о событии по идентификатору
     /// </summary>
-    /// <param name="id">Идентификатор события</param>
-    /// <returns></returns>
     [HttpGet("{id:guid}")]
-    public async Task<ApiResult<Event>> GetEventById(Guid id)
+    [ProducesResponseType(typeof(EventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EventResponse>> GetEventById(Guid id)
     {
-        _logger.Log(LogLevel.Information, "Получаем информацию о событии {id}", id);
-        var eventOne = await _eventService.GetAsync(id);
-        if (eventOne == null)
+        logger.LogInformation("Получаем информацию о событии {Id}", id);
+        var eventOne = await eventService.GetAsync(id);
+        if (eventOne is null)
         {
-            return new ApiResult<Event>
-            {
-                Data = null,
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = "Событие не найдено"
-            };
+            return NotFound(new { message = "Событие не найдено" });
         }
 
-        return new ApiResult<Event>
-        {
-            Data = eventOne,
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = "Получаем информацию о событии"
-        };
+        return Ok(ToResponse(eventOne));
     }
 
     /// <summary>
     /// Создание события
     /// </summary>
-    /// <param name="eventDto">Входящий запрос</param>
-    /// <returns></returns>
     [HttpPost]
-    public async Task<ApiResult<Event>> CreateEvent([FromBody] EventDto eventDto) 
+    [ProducesResponseType(typeof(EventResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<EventResponse>> CreateEvent([FromBody] EventDto eventDto)
     {
-        _logger.Log(LogLevel.Information, "Создание события {eventDto}", eventDto);
+        logger.LogInformation("Создание события {Title}", eventDto.Title);
 
-        if (eventDto.StartAt > eventDto.EndAt) 
-        {
-            return new ApiResult<Event>
-            {
-                Data = null,
-                Success = false,
-                StatusCode = HttpStatusCode.BadRequest,
-                Message = $"Дата начала события '{eventDto.StartAt:dd.MM.yyyy HH:mm}' больше даты окончания события {eventDto.EndAt:dd.MM.yyyy HH:mm}"
-            };
-        }
-        
-        var eventNew = new Event(eventDto.Title, eventDto.Description, eventDto.StartAt, eventDto.EndAt);
-        await _eventService.AddEventAsync(eventNew);
-        
-        return new ApiResult<Event>
-        { 
-            Data = eventNew,
-            Success = true,
-            StatusCode= HttpStatusCode.OK,
-            Message = "Создан объект событие"
-        };
+        var created = await eventService.AddEventAsync(eventDto);
+        var response = ToResponse(created);
+
+        return CreatedAtAction(nameof(GetEventById), new { id = response.Id }, response);
     }
 
     /// <summary>
     /// Изменение события по идентификатору
     /// </summary>
-    /// <param name="id">Идентификтор события</param>
-    /// <param name="eventDto">Измененные данные события</param>
-    /// <returns></returns>
     [HttpPut("{id:guid}")]
-    public async Task<ApiResult<EventDto>> UpdateEvent(Guid id, [FromBody] EventDto eventDto)
+    [ProducesResponseType(typeof(EventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<EventResponse>> UpdateEvent(Guid id, [FromBody] EventDto eventDto)
     {
-        _logger.Log(LogLevel.Information, "Обновление события {id}", id);
+        logger.LogInformation("Обновление события {Id}", id);
 
-        var eventOne = await _eventService.GetAsync(id);
-        if (eventOne == null)
+        var updated = await eventService.UpdateEventAsync(id, eventDto);
+        if (!updated)
         {
-            return new ApiResult<EventDto>
-            {
-                Data = null,
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = "Событие не найдено"
-            };
+            return NotFound(new { message = "Событие не найдено" });
         }
 
-        if (eventDto.StartAt > eventDto.EndAt)
-        {
-            return new ApiResult<EventDto>
-            {
-                Data = null,
-                Success = false,
-                StatusCode = HttpStatusCode.BadRequest,
-                Message = $"Дата начала события '{eventDto.StartAt:dd.MM.yyyy HH:mm}' больше даты окончания события {eventDto.EndAt:dd.MM.yyyy HH:mm}"
-            };
-        }
-
-        await _eventService.UpdateEventAsync(id, eventDto);
-
-        return new ApiResult<EventDto>
-        {
-            Data = eventDto,
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = "Событие обновлено"
-        };
+        var eventOne = await eventService.GetAsync(id);
+        return Ok(ToResponse(eventOne!));
     }
 
     /// <summary>
     /// Удаление события по идентификатору
     /// </summary>
-    /// <param name="id">Идентификатор события</param>
-    /// <returns></returns>
     [HttpDelete("{id:guid}")]
-    public async Task<ApiResult<Event>> DeleteEvent(Guid id)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteEvent(Guid id)
     {
-        _logger.Log(LogLevel.Information, "Удаление события {id}", id);
-        var eventOne = await _eventService.GetAsync(id);
-        if (eventOne == null)
+        logger.LogInformation("Удаление события {Id}", id);
+
+        var removed = await eventService.RemoveEventAsync(id);
+        if (!removed)
         {
-            return new ApiResult<Event>
-            {
-                Data = eventOne,
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = "Событие не найдено"
-            };
+            return NotFound(new { message = "Событие не найдено" });
         }
-        await _eventService.RemoveEventAsync(id);
-        return new ApiResult<Event>
-        {
-            Data = eventOne,
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = "Событие удалено"
-        };
+
+        return NoContent();
     }
+
+    private static EventResponse ToResponse(Data.Models.Event e) => new()
+    {
+        Id = e.Id,
+        Title = e.Title,
+        Description = e.Description,
+        StartAt = e.StartAt,
+        EndAt = e.EndAt
+    };
 }

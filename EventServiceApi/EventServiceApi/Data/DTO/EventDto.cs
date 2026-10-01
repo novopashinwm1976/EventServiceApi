@@ -1,35 +1,48 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EventServiceApi.Data.DTO
+namespace EventServiceApi.Data.DTO;
+
+/// <summary>
+/// DTO для передачи данных о событии
+/// </summary>
+public class EventDto : IValidatableObject
 {
     /// <summary>
-    /// DTO для передачи данных о событии
+    /// Заголовок события
     /// </summary>
-    public class EventDto
+    [Required(ErrorMessage = "Заголовок события обязателен для заполнения.")]
+    public required string Title { get; set; }
+
+    /// <summary>
+    /// Описание события (опционально)
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Дата начала мероприятия
+    /// </summary>
+    [Required(ErrorMessage = "Дата начала мероприятия обязательна для заполнения.")]
+    public DateTime? StartAt { get; set; }
+
+    /// <summary>
+    /// Дата окончания мероприятия
+    /// </summary>
+    [Required(ErrorMessage = "Дата окончания мероприятия обязательна для заполнения.")]
+    public DateTime? EndAt { get; set; }
+
+    /// <inheritdoc />
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        /// <summary>
-        /// Заголовок события
-        /// </summary>
-        [Required(ErrorMessage = "Заголовок события обязателен для заполнения.")]
-        public required string Title { get; set; }
-        
-        /// <summary>
-        /// Описание события
-        /// </summary>
-        public string Description { get; set; }
+        if (StartAt is null || EndAt is null)
+        {
+            yield break;
+        }
 
-        /// <summary>
-        /// Дата начала мероприятия
-        /// </summary>
-        [Required(ErrorMessage = "Дата начала мероприятия обязательно для заполнения.")]
-        [Range(typeof(DateTime), "2020-01-01", "2030-12-31", ErrorMessage = "Некорректная дата")]
-        public DateTime StartAt { get; set; }
-
-        /// <summary>
-        /// Дата окончания мероприятия
-        /// </summary>
-        [Required(ErrorMessage = "Дата окончания мероприятия обязательно для заполнения.")]
-        [Range(typeof(DateTime), "2020-01-01", "2030-12-31", ErrorMessage = "Некорректная дата")]
-        public DateTime EndAt { get; set; }
+        if (StartAt.Value >= EndAt.Value)
+        {
+            yield return new ValidationResult(
+                $"Дата начала события '{StartAt.Value:dd.MM.yyyy HH:mm}' должна быть строго раньше даты окончания '{EndAt.Value:dd.MM.yyyy HH:mm}'.",
+                new[] { nameof(StartAt), nameof(EndAt) });
+        }
     }
 }

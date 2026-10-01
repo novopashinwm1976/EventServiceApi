@@ -1,46 +1,37 @@
 ﻿using EventServiceApi.Data.DTO;
 using EventServiceApi.Data.Models;
 
-namespace EventServiceApi.Application.Interfaces
+namespace EventServiceApi.Application.Interfaces;
+
+/// <summary>
+/// Интерфейс по работе с CRUD операциями событий
+/// </summary>
+public interface IEventService
 {
     /// <summary>
-    /// Интерфейс по работе с CRUD операциями событий
+    /// Получить все события
     /// </summary>
-    public interface IEventService
-    {
-        /// <summary>
-        /// Получить все события
-        /// </summary>
-        /// <returns></returns>
-        Task<List<Event>> GetAllAsync();
+    Task<List<Event>> GetAllAsync();
 
-        /// <summary>
-        /// Получить событие по Id
-        /// </summary>
-        /// <param name="Id">id события</param>
-        /// <returns></returns>
-        Task<Event> GetAsync(Guid Id);
+    /// <summary>
+    /// Получить событие по Id
+    /// </summary>
+    Task<Event?> GetAsync(Guid id);
 
-        /// <summary>
-        /// Добавить событие
-        /// </summary>
-        /// <param name="eventNew"></param>
-        /// <returns></returns>
-        Task AddEventAsync(Event eventNew);
+    /// <summary>
+    /// Добавить событие
+    /// </summary>
+    Task<Event> AddEventAsync(EventDto eventNew);
 
-        /// <summary>
-        /// Обновить событие
-        /// </summary>
-        /// <param name="Id">id события</param>
-        /// <param name="eventChange"></param>
-        /// <returns></returns>
-        Task UpdateEventAsync(Guid Id, EventDto eventChange);
+    /// <summary>
+    /// Обновить событие
+    /// </summary>
+    /// <returns>true, если запись найдена и обновлена; иначе false</returns>
+    Task<bool> UpdateEventAsync(Guid id, EventDto eventChange);
 
-        /// <summary>
-        /// Удалить событие
-        /// </summary>
-        /// <param name="eventDelete"></param>
-        /// <returns></returns>
-        Task RemoveEventAsync(Guid eventDelete);
-    }
+    /// <summary>
+    /// Удалить событие
+    /// </summary>
+    /// <returns>true, если запись найдена и удалена; иначе false</returns>
+    Task<bool> RemoveEventAsync(Guid id);
 }

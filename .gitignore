@@ -1,0 +1,11 @@
+﻿################################################################################
+# Данный GITIGNORE-файл был автоматически создан Microsoft(R) Visual Studio.
+################################################################################
+
+/EventServiceApi/.vs
+/EventServiceApi/EventServiceApi/obj
+/EventServiceApi/EventServiceApi/bin/Debug/net10.0
+/obj
+/.vs/EventServiceApi.slnx/FileContentIndex
+/EventServiceApi.csproj.user
+/.vs

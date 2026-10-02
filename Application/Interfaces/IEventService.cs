@@ -26,8 +26,8 @@ public interface IEventService
     /// <summary>
     /// Обновить событие
     /// </summary>
-    /// <returns>true, если запись найдена и обновлена; иначе false</returns>
-    Task<bool> UpdateEventAsync(Guid id, EventDto eventChange);
+    /// <returns>Обновлённое событие, либо null, если запись не найдена</returns>
+    Task<Event?> UpdateEventAsync(Guid id, EventDto eventChange);
 
     /// <summary>
     /// Удалить событие

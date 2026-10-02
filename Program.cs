@@ -1,5 +1,5 @@
 using EventServiceApi.Application;
-using EventServiceApi.Infrastruture;
+using EventServiceApi.Infrastructure;
 using EventServiceApi.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);

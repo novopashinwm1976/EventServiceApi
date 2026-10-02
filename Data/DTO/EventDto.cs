@@ -11,7 +11,7 @@ public class EventDto : IValidatableObject
     /// Заголовок события
     /// </summary>
     [Required(ErrorMessage = "Заголовок события обязателен для заполнения.")]
-    public required string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// Описание события (опционально)

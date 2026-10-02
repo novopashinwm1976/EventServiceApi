@@ -29,14 +29,14 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(EventResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EventResponse>> GetEventById(Guid id)
     {
         logger.LogInformation("Получаем информацию о событии {Id}", id);
         var eventOne = await eventService.GetAsync(id);
         if (eventOne is null)
         {
-            return NotFound(new { message = "Событие не найдено" });
+            return NotFoundProblem(id);
         }
 
         return Ok(ToResponse(eventOne));
@@ -47,7 +47,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(EventResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<EventResponse>> CreateEvent([FromBody] EventDto eventDto)
     {
         logger.LogInformation("Создание события {Title}", eventDto.Title);
@@ -63,20 +63,19 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(EventResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<EventResponse>> UpdateEvent(Guid id, [FromBody] EventDto eventDto)
     {
         logger.LogInformation("Обновление события {Id}", id);
 
         var updated = await eventService.UpdateEventAsync(id, eventDto);
-        if (!updated)
+        if (updated is null)
         {
-            return NotFound(new { message = "Событие не найдено" });
+            return NotFoundProblem(id);
         }
 
-        var eventOne = await eventService.GetAsync(id);
-        return Ok(ToResponse(eventOne!));
+        return Ok(ToResponse(updated));
     }
 
     /// <summary>
@@ -84,7 +83,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteEvent(Guid id)
     {
         logger.LogInformation("Удаление события {Id}", id);
@@ -92,11 +91,18 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         var removed = await eventService.RemoveEventAsync(id);
         if (!removed)
         {
-            return NotFound(new { message = "Событие не найдено" });
+            return NotFoundProblem(id);
         }
 
         return NoContent();
     }
+
+    private ObjectResult NotFoundProblem(Guid id) => NotFound(new ProblemDetails
+    {
+        Status = StatusCodes.Status404NotFound,
+        Title = "Событие не найдено",
+        Detail = $"Событие с идентификатором {id} не найдено."
+    });
 
     private static EventResponse ToResponse(Data.Models.Event e) => new()
     {

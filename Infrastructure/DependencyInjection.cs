@@ -2,7 +2,7 @@
 
 using Microsoft.EntityFrameworkCore;
 
-namespace EventServiceApi.Infrastruture;
+namespace EventServiceApi.Infrastructure;
 
 /// <summary>
 /// Extension метод для регистрации инфраструктурных сервисов в контейнере зависимостей

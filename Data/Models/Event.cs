@@ -7,7 +7,7 @@
 /// <param name="description">Описание события</param>
 /// <param name="startAt">Дата и время начала события</param>
 /// <param name="endAt">Дата и время окончания события</param>
-public class Event(string title, string description, DateTime? startAt, DateTime? endAt)
+public class Event(string title, string? description, DateTime? startAt, DateTime? endAt)
 {
     /// <summary>
     /// Идентификатор события
@@ -22,7 +22,7 @@ public class Event(string title, string description, DateTime? startAt, DateTime
     /// <summary>
     /// Описание события
     /// </summary>
-    public string Description { get; set; } = description;
+    public string? Description { get; set; } = description;
 
     /// <summary>
     /// Дата и время начала события 

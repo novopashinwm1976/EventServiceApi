@@ -18,7 +18,7 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public async Task<Event> AddEventAsync(EventDto eventNew)
     {
-        var entity = new Event(eventNew.Title, eventNew.Description ?? string.Empty, eventNew.StartAt, eventNew.EndAt);
+        var entity = new Event(eventNew.Title!, eventNew.Description, eventNew.StartAt, eventNew.EndAt);
 
         _context.Events.Add(entity);
         await _context.SaveChangesAsync();
@@ -28,22 +28,22 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     }
 
     /// <inheritdoc />
-    public async Task<bool> UpdateEventAsync(Guid id, EventDto eventChange)
+    public async Task<Event?> UpdateEventAsync(Guid id, EventDto eventChange)
     {
         var entity = await _context.Events.FirstOrDefaultAsync(x => x.Id == id);
         if (entity is null)
         {
             _logger.LogWarning("Событие {Id} не найдено для обновления", id);
-            return false;
+            return null;
         }
 
-        entity.Description = eventChange.Description ?? string.Empty;
-        entity.Title = eventChange.Title;
+        entity.Description = eventChange.Description;
+        entity.Title = eventChange.Title!;
         entity.StartAt = eventChange.StartAt;
         entity.EndAt = eventChange.EndAt;
 
         await _context.SaveChangesAsync();
-        return true;
+        return entity;
     }
 
     /// <inheritdoc />
@@ -55,7 +55,10 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public Task<List<Event>> GetAllAsync()
     {
-        return _context.Events.ToListAsync();
+        return _context.Events
+            .OrderBy(e => e.StartAt)
+            .ThenBy(e => e.Id)
+            .ToListAsync();
     }
 
     /// <inheritdoc />

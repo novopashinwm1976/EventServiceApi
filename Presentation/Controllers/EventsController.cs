@@ -13,15 +13,30 @@ namespace EventServiceApi.Presentation.Controllers;
 public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
 {
     /// <summary>
-    /// Получаем все события
+    /// Получаем страницу событий с опциональной фильтрацией и пагинацией.
     /// </summary>
+    /// <param name="filter">Параметры: title, from, to, page, pageSize. Все опциональны.</param>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<EventResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<EventResponse>>> GetEvents()
+    [ProducesResponseType(typeof(PaginatedResult<EventResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResult<EventResponse>>> GetEvents([FromQuery] EventFilterDto filter)
     {
-        logger.LogInformation("Получаем информацию о всех событиях");
-        var events = await eventService.GetAllAsync();
-        return Ok(events.Select(ToResponse));
+        logger.LogInformation(
+            "Получаем события: Title={Title}, From={From}, To={To}, Page={Page}, PageSize={PageSize}",
+            filter.Title, filter.From, filter.To, filter.Page, filter.PageSize);
+
+        var page = await eventService.GetAllAsync(filter);
+
+        var response = new PaginatedResult<EventResponse>
+        {
+            TotalCount = page.TotalCount,
+            Items = page.Items.Select(ToResponse).ToList(),
+            Page = page.Page,
+            PageSize = page.PageSize,
+            TotalPages = page.TotalPages
+        };
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -97,12 +112,17 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         return NoContent();
     }
 
-    private ObjectResult NotFoundProblem(Guid id) => NotFound(new ProblemDetails
+    private ObjectResult NotFoundProblem(Guid id)
     {
-        Status = StatusCodes.Status404NotFound,
-        Title = "Событие не найдено",
-        Detail = $"Событие с идентификатором {id} не найдено."
-    });
+        logger.LogWarning("Событие {Id} не найдено", id);
+
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Событие не найдено",
+            Detail = $"Событие с идентификатором {id} не найдено."
+        });
+    }
 
     private static EventResponse ToResponse(Data.Models.Event e) => new()
     {

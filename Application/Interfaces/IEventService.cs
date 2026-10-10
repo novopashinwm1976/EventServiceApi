@@ -9,9 +9,11 @@ namespace EventServiceApi.Application.Interfaces;
 public interface IEventService
 {
     /// <summary>
-    /// Получить все события
+    /// Получить страницу событий с опциональной фильтрацией.
+    /// Фильтры комбинируются по логическому И.
     /// </summary>
-    Task<List<Event>> GetAllAsync();
+    /// <param name="filter">Параметры фильтрации и пагинации</param>
+    Task<PaginatedResult<Event>> GetAllAsync(EventFilterDto filter);
 
     /// <summary>
     /// Получить событие по Id

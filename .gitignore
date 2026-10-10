@@ -9,3 +9,4 @@
 /.vs/EventServiceApi.slnx/FileContentIndex
 /EventServiceApi.csproj.user
 /.vs
+/bin/Debug/net10.0

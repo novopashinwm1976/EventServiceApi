@@ -71,8 +71,6 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public async Task<Event> AddEventAsync(EventDto eventNew)
     {
-        Validate(eventNew);
-
         var entity = new Event(eventNew.Title!, eventNew.Description, eventNew.StartAt, eventNew.EndAt);
 
         _context.Events.Add(entity);
@@ -85,8 +83,6 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public async Task<Event?> UpdateEventAsync(Guid id, EventDto eventChange)
     {
-        Validate(eventChange);
-
         var entity = await _context.Events.FirstOrDefaultAsync(x => x.Id == id);
         if (entity is null)
         {
@@ -122,34 +118,5 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
         _context.Events.Remove(entity);
         await _context.SaveChangesAsync();
         return true;
-    }
-
-    /// <summary>
-    /// Проверка инвариантов события.
-    /// Выбрасывает <see cref="ArgumentException"/> — middleware превратит его в 400 Bad Request.
-    /// </summary>
-    private static void Validate(EventDto dto)
-    {
-        if (string.IsNullOrWhiteSpace(dto.Title))
-        {
-            throw new ArgumentException("Заголовок события обязателен для заполнения.", nameof(dto.Title));
-        }
-
-        if (dto.StartAt is null)
-        {
-            throw new ArgumentException("Дата начала мероприятия обязательна для заполнения.", nameof(dto.StartAt));
-        }
-
-        if (dto.EndAt is null)
-        {
-            throw new ArgumentException("Дата окончания мероприятия обязательна для заполнения.", nameof(dto.EndAt));
-        }
-
-        if (dto.StartAt.Value >= dto.EndAt.Value)
-        {
-            throw new ArgumentException(
-                $"Дата начала события '{dto.StartAt.Value:dd.MM.yyyy HH:mm}' должна быть строго раньше даты окончания '{dto.EndAt.Value:dd.MM.yyyy HH:mm}'.",
-                nameof(dto.StartAt));
-        }
     }
 }

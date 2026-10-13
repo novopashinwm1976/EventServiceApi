@@ -49,6 +49,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             return;
         }
 
+        //Детали оставляем в логе
+        _logger.LogError(exception, "Ошибка при обработке запроса {Path}: {Message}", context.Request.Path, exception.Message);
+
         var (statusCode, title, detail) = MapException(exception);
 
         // Логируем: Warning для ожидаемых ошибок (400/404), Error для 500
@@ -101,12 +104,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         ArgumentNullException or ArgumentException
             => (StatusCodes.Status400BadRequest,
                 "Некорректные аргументы запроса",
-                exception.Message),
+                "Некорректные аргументы запроса"),
 
         KeyNotFoundException
             => (StatusCodes.Status404NotFound,
                 "Ресурс не найден",
-                exception.Message),
+                "Ресурс не найден"),
 
         // Всё остальное — непредвиденная ошибка → 500.
         // Детали исключения НЕ отдаём клиенту (только в лог).

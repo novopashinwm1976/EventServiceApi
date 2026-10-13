@@ -16,6 +16,59 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     private readonly ILogger<EventService> _logger = logger;
 
     /// <inheritdoc />
+    public async Task<PaginatedResult<Event>> GetAllAsync(EventFilterDto filter)
+    {
+        IQueryable<Event> query = _context.Events;
+
+        // Фильтр по названию: регистронезависимый, частичное совпадение
+        if (!string.IsNullOrWhiteSpace(filter.Title))
+        {
+            var title = filter.Title.Trim().ToLower();
+            query = query.Where(e => e.Title.ToLower().Contains(title));
+        }
+
+        // Фильтр: событие начинается не раньше указанной даты
+        if (filter.From is not null)
+        {
+            query = query.Where(e => e.StartAt != null && e.StartAt >= filter.From);
+        }
+
+        // Фильтр: событие заканчивается не позже указанной даты
+        if (filter.To is not null)
+        {
+            query = query.Where(e => e.EndAt != null && e.EndAt <= filter.To);
+        }
+
+        // Общее количество записей под фильтром (до пагинации)
+        var totalCount = await query.CountAsync();
+
+        // Сортировка обязательна перед Skip/Take — иначе страницы нестабильны
+        var items = await query
+            .OrderBy(e => e.StartAt)
+            .ThenBy(e => e.Id)
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync();
+
+        var totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+        _logger.LogInformation(
+            "Постраничная выборка: Page={Page}, PageSize={PageSize}, TotalCount={TotalCount}, TotalPages={TotalPages}",
+            filter.Page, filter.PageSize, totalCount, totalPages);
+
+        return new PaginatedResult<Event>
+        {
+            TotalCount = totalCount,
+            Items = items,
+            Page = filter.Page,
+            PageSize = filter.PageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<Event> AddEventAsync(EventDto eventNew)
     {
         var entity = new Event(eventNew.Title!, eventNew.Description, eventNew.StartAt, eventNew.EndAt);
@@ -50,15 +103,6 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     public Task<Event?> GetAsync(Guid id)
     {
         return _context.Events.FirstOrDefaultAsync(x => x.Id == id);
-    }
-
-    /// <inheritdoc />
-    public Task<List<Event>> GetAllAsync()
-    {
-        return _context.Events
-            .OrderBy(e => e.StartAt)
-            .ThenBy(e => e.Id)
-            .ToListAsync();
     }
 
     /// <inheritdoc />

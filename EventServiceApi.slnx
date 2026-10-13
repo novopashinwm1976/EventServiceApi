@@ -1,3 +1,7 @@
 <Solution>
-  <Project Path="EventServiceApi.csproj" />
+  <Folder Name="/Элементы решения/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="EventServiceApi.Tests/EventServiceApi.Tests.csproj" Id="6792f715-bb9e-4489-999f-987eeffe65f5" />
+  <Project Path="EventServiceApi/EventServiceApi.csproj" />
 </Solution>

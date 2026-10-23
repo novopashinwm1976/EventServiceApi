@@ -14,4 +14,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// DbSet для работы с событиями
     /// </summary>
     public DbSet<Event> Events { get; set; }
+
+    /// <summary>
+    /// DbSet для работы с бронированиями
+    /// </summary>
+    public DbSet<Booking> Bookings { get; set; }
 }

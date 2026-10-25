@@ -26,12 +26,12 @@ public class BookingService(AppDbContext context, ILogger<BookingService> logger
     /// <param name="eventId">Id события</param>
     /// <param name="ct">Токен отмены</param>
     /// <returns></returns>
-    public async Task<Booking?> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
+    public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken ct = default)
     {
 
         // Удалённое событие = отсутствует в хранилище
         if (await _context.Events.FirstOrDefaultAsync(x => x.Id == eventId,ct) is null)
-            return null;
+            throw new KeyNotFoundException($"Событие с Id {eventId} не найдено");
 
         var entity = new Booking
         {
@@ -53,7 +53,7 @@ public class BookingService(AppDbContext context, ILogger<BookingService> logger
     /// <param name="bookingId">Id бронирования</param>
     /// <param name="ct">Токен отмены</param>
     /// <returns></returns>
-    public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
+    public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken ct = default)
     {
         return await _context.Bookings.FirstOrDefaultAsync(x => x.Id == bookingId, ct);
     }

@@ -71,6 +71,8 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public async Task<Event> AddEventAsync(EventDto eventNew)
     {
+        Validate(eventNew);
+
         var entity = new Event(eventNew.Title!, eventNew.Description, eventNew.StartAt, eventNew.EndAt);
 
         _context.Events.Add(entity);
@@ -83,6 +85,8 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
     /// <inheritdoc />
     public async Task<Event?> UpdateEventAsync(Guid id, EventDto eventChange)
     {
+        Validate(eventChange);
+
         var entity = await _context.Events.FirstOrDefaultAsync(x => x.Id == id);
         if (entity is null)
         {
@@ -118,5 +122,20 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
         _context.Events.Remove(entity);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    private void Validate(EventDto dto) 
+    {
+        if (dto.StartAt is null)
+            throw new ArgumentException("Дата начала мероприятия обязателное поле!");
+
+        if (dto.EndAt is null)
+            throw new ArgumentException("Дата окончания мероприятия обязателное поле!");
+
+        if (dto.StartAt >= dto.EndAt)
+            throw new ArgumentException("Дата начала не может быть больше или равно дате конца периода события!");
+
+        if (string.IsNullOrEmpty(dto.Title.Trim()))
+            throw new ArgumentException("Заголовок мероприятия - обязательное поле!");
     }
 }

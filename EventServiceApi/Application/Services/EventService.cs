@@ -124,7 +124,7 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
         return true;
     }
 
-    private void Validate(EventDto dto) 
+    private void Validate(EventDto dto)
     {
         if (dto.StartAt is null)
             throw new ArgumentException("Дата начала мероприятия обязателное поле!");
@@ -135,7 +135,7 @@ public class EventService(AppDbContext context, ILogger<EventService> logger) : 
         if (dto.StartAt >= dto.EndAt)
             throw new ArgumentException("Дата начала не может быть больше или равно дате конца периода события!");
 
-        if (string.IsNullOrEmpty(dto.Title.Trim()))
+        if (string.IsNullOrEmpty(dto?.Title?.Trim()))
             throw new ArgumentException("Заголовок мероприятия - обязательное поле!");
     }
 }

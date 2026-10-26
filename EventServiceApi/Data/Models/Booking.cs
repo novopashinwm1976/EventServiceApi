@@ -25,7 +25,7 @@ public class Booking
     /// <summary>
     /// Дата и время создания брони
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Дата и время обработки брони

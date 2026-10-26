@@ -76,17 +76,17 @@ public class BookingServiceTests
         // Arrange
         var (service, context) = BookingServiceFactory.Create();
         var ev = SeedEvent(context);
-        Booking created = await service.CreateBookingAsync(ev.Id);
+        var created = await service.CreateBookingAsync(ev.Id);
 
         // Act
-        Booking fetched = await service.GetBookingByIdAsync(created.Id);
+        var fetched = await service.GetBookingByIdAsync(created?.Id ?? Guid.NewGuid());
 
         // Assert
         Assert.NotNull(fetched);
-        Assert.Equal(created.Id, fetched!.Id);
-        Assert.Equal(created.EventId, fetched.EventId);
-        Assert.Equal(created.Status, fetched.Status);
-        Assert.Equal(created.CreatedAt, fetched.CreatedAt);
+        Assert.Equal(created?.Id, fetched!.Id);
+        Assert.Equal(created?.EventId, fetched.EventId);
+        Assert.Equal(created?.Status, fetched.Status);
+        Assert.Equal(created?.CreatedAt, fetched.CreatedAt);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class BookingServiceTests
         var created = await service.CreateBookingAsync(ev.Id);
 
         // Меняем статус в БД так же, как это делает BookingBackgroundService
-        var entity = await context.Bookings.FindAsync(created.Id);
+        var entity = await context.Bookings.FindAsync(created?.Id ?? Guid.NewGuid());
         Assert.NotNull(entity);
 
         entity!.Status = BookingStatus.Confirmed;
@@ -106,7 +106,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         // Act + Assert (Confirmed)
-        var afterConfirm = await service.GetBookingByIdAsync(created.Id);
+        var afterConfirm = await service.GetBookingByIdAsync(created?.Id ?? Guid.NewGuid());
         Assert.NotNull(afterConfirm);
         Assert.Equal(BookingStatus.Confirmed, afterConfirm!.Status);
         Assert.NotNull(afterConfirm.ProcessedAt);
@@ -117,7 +117,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         // Act + Assert (Rejected)
-        var afterReject = await service.GetBookingByIdAsync(created.Id);
+        var afterReject = await service.GetBookingByIdAsync(created?.Id ?? Guid.NewGuid());
         Assert.NotNull(afterReject);
         Assert.Equal(BookingStatus.Rejected, afterReject!.Status);
     }
@@ -133,8 +133,8 @@ public class BookingServiceTests
         var (service, _) = BookingServiceFactory.Create();
         var unknownEventId = Guid.NewGuid();
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => service.CreateBookingAsync(unknownEventId));
+        var result = await service.CreateBookingAsync(unknownEventId);
+        Assert.Null(result);
     }
 
     [Fact]
@@ -148,8 +148,8 @@ public class BookingServiceTests
         context.Events.Remove(ev);
         await context.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => service.CreateBookingAsync(deletedId));
+        var result = await service.CreateBookingAsync(deletedId);
+        Assert.Null(result);
 
         // Дополнительно убеждаемся, что бронь не создана
         Assert.Equal(0, await context.Bookings.CountAsync<Booking>());

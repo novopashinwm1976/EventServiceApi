@@ -8,54 +8,42 @@ namespace EventServiceApi.Application.Services;
 /// <summary>
 /// Фоновый процесс для бронирования
 /// </summary>
-/// <param name="context">Сервис хранения данных по бронированию</param>
-/// <param name="logger">Логгер класса</param>
-public class BookingBackgroundService(AppDbContext context,
-                                ILogger<BookingBackgroundService> logger) : BackgroundService
+/// <param name="scopeFactory">фабричный метод вызова scoped процедур</param>
+/// <param name="logger">Логгер</param>
+public class BookingBackgroundService(
+    IServiceScopeFactory scopeFactory,
+    ILogger<BookingBackgroundService> logger) : BackgroundService
 {
-    private readonly AppDbContext _context = context;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly ILogger<BookingBackgroundService> _logger = logger;
 
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
+    private readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
     /// <summary>
-    /// Выполнение бронирования
+    /// Выполняет фоновую задачу, которая периодически проверяет наличие бронирований со статусом Pending и обновляет их статус на Confirmed.
     /// </summary>
-    /// <param name="stoppingToken">токен отмены</param>
+    /// <param name="stoppingToken">Токен отмены</param>
     /// <returns></returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
+            using (var scope = _scopeFactory.CreateScope())
             {
-                var pending = _context.Bookings
-                                      .Where(b => b.Status == BookingStatus.Pending)
-                                      .ToList();
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                // ... вся работа с context внутри scope
+                var pendingBookings = await context.Bookings
+                    .Where(b => b.Status == BookingStatus.Pending)
+                    .ToListAsync(stoppingToken);
 
-                foreach (var booking in pending)
+                foreach (var booking in pendingBookings)
                 {
-                    await Task.Delay(ProcessingDelay, stoppingToken); // «внешняя система»
-
+                    await Task.Delay(2000, stoppingToken); // имитация внешнего вызова
                     booking.Status = BookingStatus.Confirmed;
                     booking.ProcessedAt = DateTime.UtcNow;
-                    
-                    _context.Bookings.Update(booking);
-                    await _context.SaveChangesAsync();
-                    if (_logger.IsEnabled(LogLevel.Information))
-                    {
-                        _logger.LogInformation("Booking {BookingId} -> Confirmed", booking.Id);
-                    }
                 }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Background processing error");
+
+                await context.SaveChangesAsync(stoppingToken);
             }
 
             await Task.Delay(PollInterval, stoppingToken);

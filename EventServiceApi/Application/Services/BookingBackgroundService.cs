@@ -18,6 +18,7 @@ public class BookingBackgroundService(
     private readonly ILogger<BookingBackgroundService> _logger = logger;
 
     private readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
+    private const int ProcessingDelayMs = 2000;
 
     /// <summary>
     /// Выполняет фоновую задачу, которая периодически проверяет наличие бронирований со статусом Pending и обновляет их статус на Confirmed.
@@ -26,24 +27,36 @@ public class BookingBackgroundService(
     /// <returns></returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+
         while (!stoppingToken.IsCancellationRequested)
         {
+
             using (var scope = _scopeFactory.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                // ... вся работа с context внутри scope
-                var pendingBookings = await context.Bookings
-                    .Where(b => b.Status == BookingStatus.Pending)
-                    .ToListAsync(stoppingToken);
-
-                foreach (var booking in pendingBookings)
+                try
                 {
-                    await Task.Delay(2000, stoppingToken); // имитация внешнего вызова
-                    booking.Status = BookingStatus.Confirmed;
-                    booking.ProcessedAt = DateTime.UtcNow;
-                }
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var pendingBookings = await context.Bookings
+                        .Where(b => b.Status == BookingStatus.Pending)
+                        .ToListAsync(stoppingToken);
 
-                await context.SaveChangesAsync(stoppingToken);
+                    foreach (var booking in pendingBookings)
+                    {
+                        await Task.Delay(ProcessingDelayMs, stoppingToken); // имитация внешнего вызова
+                        booking.Status = BookingStatus.Confirmed;
+                        booking.ProcessedAt = DateTime.UtcNow;
+                    }
+
+                    await context.SaveChangesAsync(stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Выходим из цикла, если задача была отменена
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Ошибка при обработке бронирований");
+                }
             }
 
             await Task.Delay(PollInterval, stoppingToken);

@@ -24,7 +24,7 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
     /// <param name="ct">Токен отмены операции.</param>
     /// <returns>Информация о бронировании или NotFound, если событие не найдено.</returns>
     [HttpPost("events/{id:guid}/book")]
-    [ProducesResponseType(typeof(Booking), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateBooking(Guid id, CancellationToken ct)
     {
@@ -32,7 +32,7 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
         if (booking is null) return NotFound();
 
         // AcceptedAtAction: 202 + Location: /bookings/{bookingId}
-        return AcceptedAtAction(nameof(GetBooking), new { id = booking.Id }, booking);
+        return AcceptedAtAction(nameof(GetBooking), new { id = booking.Id }, ConvertToBookingResponse(booking));
     }
 
     /// <summary>
@@ -42,11 +42,17 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
     /// <param name="ct">Токен отмены операции.</param>
     /// <returns>Информация о бронировании или NotFound, если не найдено.</returns>
     [HttpGet("bookings/{id:guid}")]
-    [ProducesResponseType(typeof(Booking), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBooking(Guid id, CancellationToken ct)
     {
         var booking = await _bookingService.GetBookingByIdAsync(id, ct);
-        return booking is null ? NotFound() : Ok(booking);
+
+        return booking is null ? NotFound() : Ok(ConvertToBookingResponse(booking));
+    }
+
+    private BookingResponse? ConvertToBookingResponse(Booking booking)
+    {
+        return booking is null ? null : new BookingResponse(booking.Id, booking.EventId, booking.Status.ToString(), booking.CreatedAt);
     }
 }

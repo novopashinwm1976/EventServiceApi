@@ -19,7 +19,6 @@ public static class DependencyInjection
     {
         // База данных
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("EventsDb"));
-
         return services;
     }
 

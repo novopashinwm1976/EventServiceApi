@@ -50,7 +50,7 @@ public class EventServiceTests
     public async Task AddEventAsync_CreatesEvent()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = MakeDto(title: "Новое событие");
 
         // Act
@@ -68,7 +68,7 @@ public class EventServiceTests
     public async Task GetAllAsync_ReturnsAllEvents()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         await service.AddEventAsync(MakeDto("A", startAt: new DateTime(2026, 6, 1, 10, 0, 0, DateTimeKind.Utc)));
         await service.AddEventAsync(MakeDto("B", startAt: new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc)));
         await service.AddEventAsync(MakeDto("C", startAt: new DateTime(2026, 7, 1, 10, 0, 0, DateTimeKind.Utc)));
@@ -86,7 +86,7 @@ public class EventServiceTests
     public async Task GetAsync_ReturnsEvent_WhenExists()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var created = await service.AddEventAsync(MakeDto("Найти меня"));
 
         // Act
@@ -102,7 +102,7 @@ public class EventServiceTests
     public async Task UpdateEventAsync_UpdatesExisting()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var created = await service.AddEventAsync(MakeDto("Старое"));
 
         var newStart = new DateTime(2026, 8, 1, 10, 0, 0, DateTimeKind.Utc);
@@ -124,7 +124,7 @@ public class EventServiceTests
     public async Task RemoveEventAsync_RemovesExisting()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var created = await service.AddEventAsync(MakeDto("Удалить меня"));
 
         // Act
@@ -140,7 +140,7 @@ public class EventServiceTests
     public async Task GetAllAsync_FiltersByTitle()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         await service.AddEventAsync(MakeDto("Ежегодная конференция DevCon"));
         await service.AddEventAsync(MakeDto("Воркшоп по C#"));
         await service.AddEventAsync(MakeDto("КОНФЕРЕНЦИЯ по кибербезопасности"));
@@ -157,7 +157,7 @@ public class EventServiceTests
     public async Task GetAllAsync_FiltersByDates()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         await service.AddEventAsync(MakeDto("Раньше",
             startAt: new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc)));
@@ -183,7 +183,7 @@ public class EventServiceTests
     public async Task GetAllAsync_Pagination_WorksCorrectly()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         for (int i = 0; i < 14; i++)
         {
             await service.AddEventAsync(MakeDto($"Событие {i:D2}",
@@ -215,7 +215,7 @@ public class EventServiceTests
     public async Task GetAllAsync_Pagination_OutOfRange_ReturnsEmpty()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         await service.AddEventAsync(MakeDto("Одно событие"));
 
         // Act
@@ -231,7 +231,7 @@ public class EventServiceTests
     public async Task GetAllAsync_CombinedFiltersAndPagination()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
 
         // 3 совпадения по "конференция" в мае
         await service.AddEventAsync(MakeDto("Конференция A",
@@ -289,7 +289,7 @@ public class EventServiceTests
     public async Task GetAsync_ReturnsNull_WhenNotFound()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
 
         // Act
         var found = await service.GetAsync(Guid.NewGuid());
@@ -302,7 +302,7 @@ public class EventServiceTests
     public async Task UpdateEventAsync_ReturnsNull_WhenNotFound()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = MakeDto("Обновление");
 
         // Act
@@ -316,7 +316,7 @@ public class EventServiceTests
     public async Task RemoveEventAsync_ReturnsFalse_WhenNotFound()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
 
         // Act
         var result = await service.RemoveEventAsync(Guid.NewGuid());
@@ -329,7 +329,7 @@ public class EventServiceTests
     public async Task AddEventAsync_EmptyTitle_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = MakeDto(title: "");
 
         // Act + Assert
@@ -340,7 +340,7 @@ public class EventServiceTests
     public async Task AddEventAsync_WhitespaceTitle_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = MakeDto(title: "   ");
 
         // Act + Assert
@@ -351,7 +351,7 @@ public class EventServiceTests
     public async Task AddEventAsync_EqualDates_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dt = new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc);
         var dto = MakeDto(startAt: dt, endAt: dt);
 
@@ -363,7 +363,7 @@ public class EventServiceTests
     public async Task AddEventAsync_EndBeforeStart_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var start = new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc);
         var end = new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc);
         var dto = MakeDto(startAt: start, endAt: end);
@@ -376,7 +376,7 @@ public class EventServiceTests
     public async Task AddEventAsync_NullStartAt_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = new EventDto
         {
             Title = "Событие",
@@ -393,7 +393,7 @@ public class EventServiceTests
     public async Task AddEventAsync_NullEndAt_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var dto = new EventDto
         {
             Title = "Событие",
@@ -410,7 +410,7 @@ public class EventServiceTests
     public async Task UpdateEventAsync_InvalidDates_Throws()
     {
         // Arrange
-        var (service, _) = EventServiceFactory.Create();
+        var service = EventServiceFactory.Create();
         var created = await service.AddEventAsync(MakeDto("Валидное"));
 
         var start = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);

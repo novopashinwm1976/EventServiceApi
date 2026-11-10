@@ -58,7 +58,7 @@ public static class DbSeeder
 
             new(
                 "Вебинар: Docker и Kubernetes в проде",
-                null, 
+                null,
                 today.AddDays(2).AddHours(15),
                 today.AddDays(2).AddHours(17)),
 

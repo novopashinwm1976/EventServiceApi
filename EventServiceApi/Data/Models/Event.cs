@@ -33,4 +33,14 @@ public class Event(string title, string? description, DateTime? startAt, DateTim
     /// Дата и время окончания события
     /// </summary>
     public DateTime? EndAt { get; set; } = endAt;
+
+    /// <summary>
+    ///  общее количество мест на событии
+    /// </summary>
+    public int TotalSeats { get; set; }
+
+    /// <summary>
+    /// текущее количество свободных мест; при создании равно
+    /// </summary>
+    public int AvailableSeats { get; set; } 
 }

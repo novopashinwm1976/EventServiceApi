@@ -9,6 +9,8 @@
 /// <param name="endAt">Дата и время окончания события</param>
 public class Event(string title, string? description, DateTime? startAt, DateTime? endAt)
 {
+    private int _avaibleSeats;
+
     /// <summary>
     /// Идентификатор события
     /// </summary>
@@ -33,4 +35,32 @@ public class Event(string title, string? description, DateTime? startAt, DateTim
     /// Дата и время окончания события
     /// </summary>
     public DateTime? EndAt { get; set; } = endAt;
+
+    /// <summary>
+    ///  общее количество мест на событии
+    /// </summary>
+    public int TotalSeats { get; set; }
+
+    /// <summary>
+    /// текущее количество свободных мест; при создании равно
+    /// </summary>
+    public int AvailableSeats { 
+        get=> _avaibleSeats;
+        set 
+        {
+            if (value > 0) 
+            {
+                _avaibleSeats = value;
+            }
+        } 
+    }
+
+    public bool TryReserveSeats(int count = 1)
+    {
+        if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+        if (_avaibleSeats < count) return false;
+
+        Interlocked.Add(ref _avaibleSeats, count);
+        return true;
+    }
 }
